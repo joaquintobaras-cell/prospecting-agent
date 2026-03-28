@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agente de Prospección · AWS Partner</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f9f9f8; --surface: #ffffff; --border: rgba(0,0,0,0.1);
+      --border-strong: rgba(0,0,0,0.2); --text: #1a1a1a; --text-muted: #6b6b68;
+      --text-hint: #9d9d99; --blue-bg: #E6F1FB; --blue-border: #85B7EB;
+      --blue-text: #0C447C; --green-bg: #EAF3DE; --green-border: #97C459;
+      --green-text: #3B6D11; --amber-bg: #FAEEDA; --amber-border: #EF9F27;
+      --amber-text: #854F0B; --red-bg: #FCEBEB; --red-border: #F09595;
+      --red-text: #A32D2D; --radius: 8px; --radius-lg: 12px;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem 1rem; }
+    .page { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 20px; font-weight: 500; margin-bottom: 4px; }
+    .subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 1.5rem; }
+    .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+    .section-label { font-size: 11px; color: var(--text-hint); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; margin-bottom: 10px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 13px; color: var(--text-muted); }
+    select, input, textarea { width: 100%; font-size: 14px; padding: 7px 10px; border: 0.5px solid var(--border-strong); border-radius: var(--radius); background: var(--surface); color: var(--text); outline: none; font-family: inherit; transition: border-color 0.15s; }
+    select:focus, input:focus, textarea:focus { border-color: #378ADD; }
+    textarea { resize: vertical; min-height: 72px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { padding: 5px 11px; border-radius: 99px; border: 0.5px solid var(--border-strong); font-size: 12px; cursor: pointer; color: var(--text-muted); background: var(--bg); user-select: none; transition: all 0.12s; }
+    .chip.active { background: var(--blue-bg); border-color: var(--blue-border); color: var(--blue-text); }
+    .run-btn { width: 100%; padding: 11px; font-size: 14px; font-weight: 500; background: var(--surface); border: 0.5px solid var(--border-strong); border-radius: var(--radius); cursor: pointer; color: var(--text); display: flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.12s; }
+    .run-btn:hover:not(:disabled) { background: var(--bg); }
+    .run-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .results { margin-top: 1rem; }
+    .lead-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 12px; }
+    .lead-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .lead-name { font-size: 15px; font-weight: 500; }
+    .lead-desc { font-size: 13px; color: var(--text-muted); marg
