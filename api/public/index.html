@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agente de Prospección · AWS Partner</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f9f9f8; --surface: #ffffff; --border: rgba(0,0,0,0.1);
+      --border-strong: rgba(0,0,0,0.2); --text: #1a1a1a; --text-muted: #6b6b68;
+      --text-hint: #9d9d99; --blue-bg: #E6F1FB; --blue-border: #85B7EB;
+      --blue-text: #0C447C; --green-bg: #EAF3DE; --green-border: #97C459;
+      --green-text: #3B6D11; --amber-bg: #FAEEDA; --amber-border: #EF9F27;
+      --amber-text: #854F0B; --red-bg: #FCEBEB; --red-border: #F09595;
+      --red-text: #A32D2D; --radius: 8px; --radius-lg: 12px;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem 1rem; }
+    .page { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 20px; font-weight: 500; margin-bottom: 4px; }
+    .subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 1.5rem; }
+    .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+    .section-label { font-size: 11px; color: var(--text-hint); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; margin-bottom: 10px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 13px; color: var(--text-muted); }
+    select, input, textarea { width: 100%; font-size: 14px; padding: 7px 10px; border: 0.5px solid var(--border-strong); border-radius: var(--radius); background: var(--surface); color: var(--text); outline: none; font-family: inherit; transition: border-color 0.15s; }
+    select:focus, input:focus, textarea:focus { border-color: #378ADD; }
+    textarea { resize: vertical; min-height: 72px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { padding: 5px 11px; border-radius: 99px; border: 0.5px solid var(--border-strong); font-size: 12px; cursor: pointer; color: var(--text-muted); background: var(--bg); user-select: none; transition: all 0.12s; }
+    .chip.active { background: var(--blue-bg); border-color: var(--blue-border); color: var(--blue-text); }
+    .run-btn { width: 100%; padding: 11px; font-size: 14px; font-weight: 500; background: var(--surface); border: 0.5px solid var(--border-strong); border-radius: var(--radius); cursor: pointer; color: var(--text); display: flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.12s; }
+    .run-btn:hover:not(:disabled) { background: var(--bg); }
+    .run-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .results { margin-top: 1rem; }
+    .lead-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 12px; }
+    .lead-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .lead-name { font-size: 15px; font-weight: 500; }
+    .lead-desc { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+    .badge { flex-shrink: 0; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 500; }
+    .badge-high { background: var(--green-bg); color: var(--green-text); border: 0.5px solid var(--green-border); }
+    .badge-mid  { background: var(--amber-bg); color: var(--amber-text); border: 0.5px solid var(--amber-border); }
+    .badge-low  { background: var(--red-bg);   color: var(--red-text);   border: 0.5px solid var(--red-border); }
+    .signals { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+    .signal { font-size: 11px; padding: 3px 8px; border-radius: 99px; background: var(--bg); color: var(--text-muted); border: 0.5px solid var(--border); }
+    .angle-label { font-size: 11px; color: var(--text-hint); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+    .angle-box { background: var(--bg); border-left: 2px solid #378ADD; border-radius: 0 var(--radius) var(--radius) 0; padding: 10px 12px; font-size: 13px; line-height: 1.6; margin-bottom: 12px; }
+    .contact-row { display: flex; align-items: center; gap: 10px; padding-top: 12px; border-top: 0.5px solid var(--border); }
+    .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--blue-bg); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: var(--blue-text); flex-shrink: 0; }
+    .contact-name { font-size: 13px; font-weight: 500; }
+    .contact-role { font-size: 11px; color: var(--text-muted); }
+    .copy-btn { margin-left: auto; font-size: 12px; padding: 5px 11px; border-radius: var(--radius); border: 0.5px solid var(--border-strong); background: transparent; cursor: pointer; color: var(--text-muted); transition: background 0.12s; }
+    .copy-btn:hover { background: var(--bg); }
+    .copy-btn.copied { background: var(--green-bg); color: var(--green-text); border-color: var(--green-border); }
+    .loading { display: flex; align-items: center; gap: 8px; padding: 2rem; color: var(--text-muted); font-size: 14px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #378ADD; animation: pulse 1.2s ease-in-out infinite; }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes pulse { 0%,80%,100%{opacity:0.2} 40%{opacity:1} }
+    .empty { text-align: center; padding: 2.5rem; color: var(--text-muted); font-size: 14px; }
+    .error-box { background: var(--red-bg); border: 0.5px solid var(--red-border); border-radius: var(--radius); padding: 10px 14px; font-size: 13px; color: var(--red-text); margin-top: 8px; }
+    @media (max-width: 500px) { .grid-2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>Agente de Prospección</h1>
+    <p class="subtitle">AWS Advanced Partner · Encuentra startups con señales de compra activas</p>
+    <div class="card">
+      <div class="section-label">criterios de búsqueda</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="grid-2">
+          <div class="field">
+            <label>Etapa</label>
+            <select id="stage">
+              <option value="pre-seed">Pre-seed</option>
+              <option value="seed">Seed</option>
+              <option value="Serie A" selected>Serie A</option>
+              <option value="Serie B">Serie B</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Región</label>
+            <select id="region">
+              <option value="México" selected>México</option>
+              <option value="LATAM">LATAM</option>
+              <option value="USA">USA</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Industria / vertical</label>
+          <div class="chips" id="industry-chips">
+            <span class="chip active" data-val="Fintech">Fintech</span>
+            <span class="chip active" data-val="B2B SaaS">B2B SaaS</span>
+            <span class="chip active" data-val="Legaltech">Legaltech</span>
+            <span class="chip active" data-val="Edtech">Edtech</span>
+            <span class="chip active" data-val="Insurtech">Insurtech</span>
+            <span class="chip active" data-val="Wealthtech">Wealthtech</span>
+            <span class="chip" data-val="Healthtech">Healthtech</span>
+            <span class="chip" data-val="E-commerce">E-commerce</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Señales de compra</label>
+          <div class="chips" id="signal-chips">
+            <span class="chip active" data-val="contratando desarrolladores activamente">Contratando devs</span>
+            <span class="chip active" data-val="ronda de inversión reciente">Ronda reciente</span>
+            <span class="chip" data-val="lanzamiento de nuevo producto">Lanzamiento de producto</span>
+            <span class="chip" data-val="crecimiento acelerado de equipo">Crecimiento de equipo</span>
+            <span class="chip" data-val="expansión a nuevos mercados">Expansión regional</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Contexto adicional (opcional)</label>
+          <textarea id="context" placeholder="Ej: nos especializamos en migraciones AWS y hemos escalado fintechs de 0 a 1M usuarios. Tenemos acceso a programas de créditos AWS para startups..."></textarea>
+        </div>
+      </div>
+    </div>
+    <button class="run-btn" id="run-btn" onclick="runAgent()">
+      <span id="btn-text">Buscar leads calificados</span>
+      <span>↗</span>
+    </button>
+    <div class="results" id="results">
+      <div class="empty">Configura los criterios y ejecuta la búsqueda</div>
+    </div>
+  </div>
+  <script>
+    document.querySelectorAll('.chip').forEach(c =>
+      c.addEventListener('click', () => c.classList.toggle('active'))
+    );
+    function getSelected(id) {
+      return Array.from(document.querySelectorAll(`#${id} .chip.active`)).map(c => c.dataset.val);
+    }
+    function scoreClass(s) { return s >= 80 ? 'badge-high' : s >= 55 ? 'badge-mid' : 'badge-low'; }
+    function scoreLabel(s) { return s >= 80 ? 'Alto potencial' : s >= 55 ? 'Potencial medio' : 'Bajo potencial'; }
+    function initials(n) { return n.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase(); }
+    function renderLeads(leads) {
+      const results = document.getElementById('results');
+      if (!leads || leads.length === 0) { results.innerHTML = '<div class="empty">No se encontraron leads. Amplía los filtros.</div>'; return; }
+      results.innerHTML = leads.map((lead, i) => `
+        <div class="lead-card">
+          <div class="lead-header">
+            <div><div class="lead-name">${lead.company}</div><div class="lead-desc">${lead.description}</div></div>
+            <span class="badge ${scoreClass(lead.score)}">${scoreLabel(lead.score)} · ${lead.score}</span>
+          </div>
+          <div class="signals">${lead.signals.map(s => `<span class="signal">${s}</span>`).join('')}</div>
+          <div class="angle-label">ángulo de entrada</div>
+          <div class="angle-box">${lead.angle}</div>
+          <div class="contact-row">
+            <div class="avatar">${initials(lead.contact)}</div>
+            <div><div class="contact-name">${lead.contact}</div><div class="contact-role">${lead.role}</div></div>
+            <button class="copy-btn" id="copy-${i}" onclick="copyCtx(${i},'${lead.angle.replace(/'/g,"\\'").replace(/\n/g,' ')}','${lead.company.replace(/'/g,"\\'")}','${lead.contact.replace(/'/g,"\\'")}','${lead.role.replace(/'/g,"\\'")}')">Copiar contexto</button>
+          </div>
+        </div>`).join('');
+    }
+    function copyCtx(i, angle, company, contact, role) {
+      navigator.clipboard.writeText(`Empresa: ${company}\nContacto: ${contact} (${role})\nÁngulo: ${angle}`).then(() => {
+        const btn = document.getElementById(`copy-${i}`);
+        btn.textContent = 'Copiado ✓'; btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copiar contexto'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+    async function runAgent() {
+      const industries = getSelected('industry-chips');
+      const signals = getSelected('signal-chips');
+      if (industries.length === 0) { document.getElementById('results').innerHTML = '<div class="error-box">Selecciona al menos una industria.</div>'; return; }
+      const btn = document.getElementById('run-btn');
+      const btnText = document.getElementById('btn-text');
+      btn.disabled = true; btnText.textContent = 'Investigando...';
+      document.getElementById('results').innerHTML = `<div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span>Buscando y calificando leads...</span></div>`;
+      try {
+        const res = await fetch('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stage: document.getElementById('stage').value, region: document.getElementById('region').value, industries, signals, context: document.getElementById('context').value }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+        renderLeads(data.leads);
+      } catch (err) {
+        document.getElementById('results').innerHTML = `<div class="error-box">Error: ${err.message}</div>`;
+      } finally {
+        btn.disabled = false; btnText.textContent = 'Buscar leads calificados';
+      }
+    }
+  </script>
+</body>
+</html>
