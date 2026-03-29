@@ -13,7 +13,8 @@
       --blue-text: #0C447C; --green-bg: #EAF3DE; --green-border: #97C459;
       --green-text: #3B6D11; --amber-bg: #FAEEDA; --amber-border: #EF9F27;
       --amber-text: #854F0B; --red-bg: #FCEBEB; --red-border: #F09595;
-      --red-text: #A32D2D; --radius: 8px; --radius-lg: 12px;
+      --red-text: #A32D2D; --purple-bg: #EEEDFE; --purple-border: #AFA9EC;
+      --purple-text: #3C3489; --radius: 8px; --radius-lg: 12px;
     }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem 1rem; }
     .page { max-width: 720px; margin: 0 auto; }
@@ -34,7 +35,9 @@
     .run-btn:hover:not(:disabled) { background: var(--bg); }
     .run-btn:disabled { opacity: 0.45; cursor: not-allowed; }
     .results { margin-top: 1rem; }
-    .lead-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 12px; }
+    .lead-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 12px; position: relative; }
+    .lead-card.seen { border-color: var(--amber-border); }
+    .seen-badge { position: absolute; top: 12px; right: 12px; font-size: 10px; padding: 2px 8px; border-radius: 99px; background: var(--amber-bg); color: var(--amber-text); border: 0.5px solid var(--amber-border); }
     .lead-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
     .lead-name { font-size: 15px; font-weight: 500; }
     .lead-desc { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
@@ -60,6 +63,23 @@
     @keyframes pulse { 0%,80%,100%{opacity:0.2} 40%{opacity:1} }
     .empty { text-align: center; padding: 2.5rem; color: var(--text-muted); font-size: 14px; }
     .error-box { background: var(--red-bg); border: 0.5px solid var(--red-border); border-radius: var(--radius); padding: 10px 14px; font-size: 13px; color: var(--red-text); margin-top: 8px; }
+
+    /* Historial */
+    .history-section { margin-top: 2rem; }
+    .history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .history-title { font-size: 13px; font-weight: 500; color: var(--text-muted); }
+    .clear-btn { font-size: 12px; padding: 4px 10px; border-radius: var(--radius); border: 0.5px solid var(--border-strong); background: transparent; cursor: pointer; color: var(--text-hint); transition: all 0.12s; }
+    .clear-btn:hover { background: var(--red-bg); color: var(--red-text); border-color: var(--red-border); }
+    .history-item { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 8px; cursor: pointer; transition: border-color 0.12s; }
+    .history-item:hover { border-color: var(--blue-border); }
+    .history-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .history-date { font-size: 12px; color: var(--text-hint); }
+    .history-count { font-size: 12px; padding: 2px 8px; border-radius: 99px; background: var(--purple-bg); color: var(--purple-text); border: 0.5px solid var(--purple-border); }
+    .history-criteria { display: flex; flex-wrap: wrap; gap: 4px; }
+    .history-tag { font-size: 11px; padding: 2px 7px; border-radius: 99px; background: var(--bg); color: var(--text-muted); border: 0.5px solid var(--border); }
+    .history-companies { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+    .history-empty { text-align: center; padding: 1.5rem; color: var(--text-hint); font-size: 13px; }
+
     @media (max-width: 500px) { .grid-2 { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -67,6 +87,7 @@
   <div class="page">
     <h1>Agente de Prospección</h1>
     <p class="subtitle">AWS Advanced Partner · Encuentra startups con señales de compra activas</p>
+
     <div class="card">
       <div class="section-label">criterios de búsqueda</div>
       <div style="display:flex;flex-direction:column;gap:14px">
@@ -118,43 +139,139 @@
         </div>
       </div>
     </div>
+
     <button class="run-btn" id="run-btn" onclick="runAgent()">
       <span id="btn-text">Buscar leads calificados</span>
       <span>↗</span>
     </button>
+
     <div class="results" id="results">
       <div class="empty">Configura los criterios y ejecuta la búsqueda</div>
     </div>
+
+    <div class="history-section" id="history-section">
+      <div class="history-header">
+        <span class="history-title">Búsquedas anteriores</span>
+        <button class="clear-btn" onclick="clearHistory()">Borrar historial</button>
+      </div>
+      <div id="history-list"></div>
+    </div>
   </div>
+
   <script>
+    const HISTORY_KEY = 'prospecting_history';
+    const SEEN_KEY = 'prospecting_seen_companies';
+
     document.querySelectorAll('.chip').forEach(c =>
       c.addEventListener('click', () => c.classList.toggle('active'))
     );
+
     function getSelected(id) {
       return Array.from(document.querySelectorAll(`#${id} .chip.active`)).map(c => c.dataset.val);
     }
+
     function scoreClass(s) { return s >= 80 ? 'badge-high' : s >= 55 ? 'badge-mid' : 'badge-low'; }
     function scoreLabel(s) { return s >= 80 ? 'Alto potencial' : s >= 55 ? 'Potencial medio' : 'Bajo potencial'; }
     function initials(n) { return n.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase(); }
-    function renderLeads(leads) {
-      const results = document.getElementById('results');
-      if (!leads || leads.length === 0) { results.innerHTML = '<div class="empty">No se encontraron leads. Amplía los filtros.</div>'; return; }
-      results.innerHTML = leads.map((lead, i) => `
-        <div class="lead-card">
-          <div class="lead-header">
-            <div><div class="lead-name">${lead.company}</div><div class="lead-desc">${lead.description}</div></div>
-            <span class="badge ${scoreClass(lead.score)}">${scoreLabel(lead.score)} · ${lead.score}</span>
-          </div>
-          <div class="signals">${lead.signals.map(s => `<span class="signal">${s}</span>`).join('')}</div>
-          <div class="angle-label">ángulo de entrada</div>
-          <div class="angle-box">${lead.angle}</div>
-          <div class="contact-row">
-            <div class="avatar">${initials(lead.contact)}</div>
-            <div><div class="contact-name">${lead.contact}</div><div class="contact-role">${lead.role}</div></div>
-            <button class="copy-btn" id="copy-${i}" onclick="copyCtx(${i},'${lead.angle.replace(/'/g,"\\'").replace(/\n/g,' ')}','${lead.company.replace(/'/g,"\\'")}','${lead.contact.replace(/'/g,"\\'")}','${lead.role.replace(/'/g,"\\'")}')">Copiar contexto</button>
-          </div>
-        </div>`).join('');
+
+    function getHistory() {
+      try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
     }
+
+    function getSeenCompanies() {
+      try { return JSON.parse(localStorage.getItem(SEEN_KEY) || '[]'); } catch { return []; }
+    }
+
+    function saveSearch(criteria, leads) {
+      const history = getHistory();
+      const seen = getSeenCompanies();
+      const companies = leads.map(l => l.company);
+      companies.forEach(c => { if (!seen.includes(c)) seen.push(c); });
+      localStorage.setItem(SEEN_KEY, JSON.stringify(seen));
+      history.unshift({
+        id: Date.now(),
+        date: new Date().toLocaleString('es-MX', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }),
+        criteria,
+        leads,
+        companies
+      });
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 20)));
+      renderHistory();
+    }
+
+    function clearHistory() {
+      if (confirm('¿Borrar todo el historial y empresas vistas?')) {
+        localStorage.removeItem(HISTORY_KEY);
+        localStorage.removeItem(SEEN_KEY);
+        renderHistory();
+      }
+    }
+
+    function renderHistory() {
+      const history = getHistory();
+      const list = document.getElementById('history-list');
+      if (history.length === 0) {
+        list.innerHTML = '<div class="history-empty">Las búsquedas anteriores aparecerán aquí</div>';
+        return;
+      }
+      list.innerHTML = history.map(h => `
+        <div class="history-item" onclick="loadSearch(${h.id})">
+          <div class="history-item-header">
+            <span class="history-date">${h.date}</span>
+            <span class="history-count">${h.leads.length} leads</span>
+          </div>
+          <div class="history-criteria">
+            <span class="history-tag">${h.criteria.stage}</span>
+            <span class="history-tag">${h.criteria.region}</span>
+            ${h.criteria.industries.slice(0,3).map(i => `<span class="history-tag">${i}</span>`).join('')}
+          </div>
+          <div class="history-companies">${h.companies.join(' · ')}</div>
+        </div>
+      `).join('');
+    }
+
+    function loadSearch(id) {
+      const history = getHistory();
+      const entry = history.find(h => h.id === id);
+      if (!entry) return;
+      renderLeads(entry.leads);
+      document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function renderLeads(leads) {
+      const seen = getSeenCompanies();
+      const results = document.getElementById('results');
+      if (!leads || leads.length === 0) {
+        results.innerHTML = '<div class="empty">No se encontraron leads. Amplía los filtros.</div>';
+        return;
+      }
+      results.innerHTML = leads.map((lead, i) => {
+        const wasSeen = seen.includes(lead.company);
+        return `
+          <div class="lead-card${wasSeen ? ' seen' : ''}">
+            ${wasSeen ? '<span class="seen-badge">Ya prospectado</span>' : ''}
+            <div class="lead-header">
+              <div>
+                <div class="lead-name">${lead.company}</div>
+                <div class="lead-desc">${lead.description}</div>
+              </div>
+              <span class="badge ${scoreClass(lead.score)}">${scoreLabel(lead.score)} · ${lead.score}</span>
+            </div>
+            <div class="signals">${lead.signals.map(s => `<span class="signal">${s}</span>`).join('')}</div>
+            <div class="angle-label">ángulo de entrada</div>
+            <div class="angle-box">${lead.angle}</div>
+            <div class="contact-row">
+              <div class="avatar">${initials(lead.contact)}</div>
+              <div>
+                <div class="contact-name">${lead.contact}</div>
+                <div class="contact-role">${lead.role}</div>
+              </div>
+              <button class="copy-btn" id="copy-${i}" onclick="copyCtx(${i},'${lead.angle.replace(/'/g,"\\'").replace(/\n/g,' ')}','${lead.company.replace(/'/g,"\\'")}','${lead.contact.replace(/'/g,"\\'")}','${lead.role.replace(/'/g,"\\'")}')">Copiar contexto</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
     function copyCtx(i, angle, company, contact, role) {
       navigator.clipboard.writeText(`Empresa: ${company}\nContacto: ${contact} (${role})\nÁngulo: ${angle}`).then(() => {
         const btn = document.getElementById(`copy-${i}`);
@@ -162,29 +279,45 @@
         setTimeout(() => { btn.textContent = 'Copiar contexto'; btn.classList.remove('copied'); }, 2000);
       });
     }
+
     async function runAgent() {
       const industries = getSelected('industry-chips');
       const signals = getSelected('signal-chips');
-      if (industries.length === 0) { document.getElementById('results').innerHTML = '<div class="error-box">Selecciona al menos una industria.</div>'; return; }
+      if (industries.length === 0) {
+        document.getElementById('results').innerHTML = '<div class="error-box">Selecciona al menos una industria.</div>';
+        return;
+      }
+
+      const criteria = {
+        stage: document.getElementById('stage').value,
+        region: document.getElementById('region').value,
+        industries, signals,
+        context: document.getElementById('context').value
+      };
+
       const btn = document.getElementById('run-btn');
       const btnText = document.getElementById('btn-text');
       btn.disabled = true; btnText.textContent = 'Investigando...';
       document.getElementById('results').innerHTML = `<div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span>Buscando y calificando leads...</span></div>`;
+
       try {
         const res = await fetch('/api/search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ stage: document.getElementById('stage').value, region: document.getElementById('region').value, industries, signals, context: document.getElementById('context').value }),
+          body: JSON.stringify(criteria),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
         renderLeads(data.leads);
+        saveSearch(criteria, data.leads);
       } catch (err) {
         document.getElementById('results').innerHTML = `<div class="error-box">Error: ${err.message}</div>`;
       } finally {
         btn.disabled = false; btnText.textContent = 'Buscar leads calificados';
       }
     }
+
+    renderHistory();
   </script>
 </body>
 </html>
